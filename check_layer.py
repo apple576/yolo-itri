@@ -1,6 +1,6 @@
 from ultralytics import YOLO
 
-model = YOLO(r'C:\Users\user\Desktop\yolo-main\runs\detect\yolov11s_wtconv3\weights\best.pt')
+model = YOLO(r"C:\Users\user\Desktop\yolo-main\runs\detect\yolov11s_wtconv3\weights\best.pt")
 
 print(f"\n{'Layer':<8} {'Module Name':<30} {'Params':<12}")
 print("=" * 52)

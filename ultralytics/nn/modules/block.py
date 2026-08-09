@@ -4,8 +4,8 @@
 from __future__ import annotations
 
 import torch
-import torch.nn as nn
 import torch.nn.functional as F
+from torch import nn
 
 from ultralytics.utils.torch_utils import fuse_conv_and_bn
 
@@ -477,32 +477,35 @@ class Bottleneck(nn.Module):
         """Apply bottleneck with optional shortcut connection."""
         return x + self.cv2(self.cv1(x)) if self.add else self.cv2(self.cv1(x))
 
-class WT_Bottleneck(nn.Module):
-    """將 WTConv 融入的 Bottleneck"""
 
-    def __init__(self, c1: int, c2: int, shortcut: bool = True, g: int = 1, k: tuple = (3, 3), e: float = 0.5, wt_levels: int = 1):
+class WT_Bottleneck(nn.Module):
+    """將 WTConv 融入的 Bottleneck."""
+
+    def __init__(
+        self, c1: int, c2: int, shortcut: bool = True, g: int = 1, k: tuple = (3, 3), e: float = 0.5, wt_levels: int = 1
+    ):
         super().__init__()
         c_ = int(c2 * e)  # 計算隱藏層通道數 (hidden channels)
-        
+
         # 解決衝突 1：判斷通道數是否相等
         if c1 != c_:
             # 如果不相等，我們先用一個 1x1 的標準 Conv 把它變成 c_
             # 然後再接上 WTConv2d (這時 in和out 都是 c_，就不會報錯了)
             # 解決衝突 2：使用 nn.Sequential 手動補上 BatchNorm 與 SiLU
             self.cv1 = nn.Sequential(
-                Conv(c1, c_, 1, 1), # 原生 Conv 已經自帶 BN 和 SiLU
+                Conv(c1, c_, 1, 1),  # 原生 Conv 已經自帶 BN 和 SiLU
                 WTConv2d(in_channels=c_, out_channels=c_, kernel_size=3, wt_levels=wt_levels),
                 nn.BatchNorm2d(c_),
-                nn.SiLU(inplace=True)
+                nn.SiLU(inplace=True),
             )
         else:
             # 如果相等，我們就可以直接替換
             self.cv1 = nn.Sequential(
                 WTConv2d(in_channels=c1, out_channels=c_, kernel_size=3, wt_levels=wt_levels),
                 nn.BatchNorm2d(c_),
-                nn.SiLU(inplace=True)
+                nn.SiLU(inplace=True),
             )
-            
+
         # cv2 保持不變
         self.cv2 = Conv(c_, c2, k[1], 1, g=g)
         self.add = shortcut and c1 == c2
@@ -510,7 +513,7 @@ class WT_Bottleneck(nn.Module):
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Forward 邏輯與原生完全相同
         return x + self.cv2(self.cv1(x)) if self.add else self.cv2(self.cv1(x))
-    
+
 
 class BottleneckCSP(nn.Module):
     """CSP Bottleneck https://github.com/WongKinYiu/CrossStagePartialNetworks."""
@@ -1120,17 +1123,28 @@ class C3k2(C2f):
 
 
 class C3k2_WTConv(C2f):
-    """
-    最終的 C3k2_WTConv 模組，這個名稱就是你未來要寫在 YAML 檔裡面的名字。
-    """
+    """最終的 C3k2_WTConv 模組，這個名稱就是你未來要寫在 YAML 檔裡面的名字。."""
 
-    def __init__(self, c1: int, c2: int, n: int = 1, c3k: bool = False, e: float = 0.5, wt_levels: int = 1, g: int = 1, shortcut: bool = True):
+    def __init__(
+        self,
+        c1: int,
+        c2: int,
+        n: int = 1,
+        c3k: bool = False,
+        e: float = 0.5,
+        wt_levels: int = 1,
+        g: int = 1,
+        shortcut: bool = True,
+    ):
         # 繼承 C2f 的基礎架構 (包含 cv1, cv2 這些外圍的卷積)
         super().__init__(c1, c2, n, shortcut, g, e)
-        
+
         # 把裡面的積木換成 WT_C3k 與 WT_Bottleneck
         self.m = nn.ModuleList(
-            WT_C3k(self.c, self.c, 2, shortcut, g, wt_levels=wt_levels) if c3k else WT_Bottleneck(self.c, self.c, shortcut, g, wt_levels=wt_levels) for _ in range(n)
+            WT_C3k(self.c, self.c, 2, shortcut, g, wt_levels=wt_levels)
+            if c3k
+            else WT_Bottleneck(self.c, self.c, shortcut, g, wt_levels=wt_levels)
+            for _ in range(n)
         )
 
 
@@ -1156,14 +1170,26 @@ class C3k(C3):
 
 
 class WT_C3k(C3):
-    """將原本 C3k 裡面的 Bottleneck 替換成 WT_Bottleneck"""
+    """將原本 C3k 裡面的 Bottleneck 替換成 WT_Bottleneck."""
 
-    def __init__(self, c1: int, c2: int, n: int = 1, shortcut: bool = True, g: int = 1, e: float = 0.5, k: int = 3, wt_levels: int = 1):
+    def __init__(
+        self,
+        c1: int,
+        c2: int,
+        n: int = 1,
+        shortcut: bool = True,
+        g: int = 1,
+        e: float = 0.5,
+        k: int = 3,
+        wt_levels: int = 1,
+    ):
         super().__init__(c1, c2, n, shortcut, g, e)
         c_ = int(c2 * e)  # hidden channels
-        
+
         # 這裡把原生的 Bottleneck 換成我們的 WT_Bottleneck
-        self.m = nn.Sequential(*(WT_Bottleneck(c_, c_, shortcut, g, k=(k, k), e=1.0, wt_levels=wt_levels) for _ in range(n)))
+        self.m = nn.Sequential(
+            *(WT_Bottleneck(c_, c_, shortcut, g, k=(k, k), e=1.0, wt_levels=wt_levels) for _ in range(n))
+        )
 
 
 class RepVGGDW(torch.nn.Module):
