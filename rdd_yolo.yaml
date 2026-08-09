@@ -1,0 +1,29 @@
+# YOLOv8 Dataset Configuration File
+
+# Dataset paths
+path: C:/Users/user/Downloads/dataset  # Absolute path to the dataset root
+train: 
+  - train/images
+
+
+val: 
+  - val/images
+  
+
+# Classes (based on RDD2022)
+nc: 14
+names:
+  0: spalled concrete             #混凝土剝落
+  1: corroded bolt                #腐蝕螺栓
+  2: expansion joint              #伸縮縫
+  3: normal drainage hole         #正常排水孔
+  4: abnormal drainage hole       #異常排水孔
+  5: normal bolt                  #正常螺栓
+  6: block expansion joint        #塊狀伸縮縫
+  7: rust steel pipe              #生鏽鋼管
+  8: barrier damage               #護欄損壞
+  9: blocked drainage hole        #阻塞排水孔
+  10: Longitudinal Crack          #縱向裂縫
+  11: Transverse Crack            #橫向裂縫
+  12: Alligator Crack             #龜裂
+  13: Pothole                     #坑洞
