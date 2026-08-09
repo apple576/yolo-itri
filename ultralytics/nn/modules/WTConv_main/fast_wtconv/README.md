@@ -14,20 +14,20 @@ A high-performance implementation of Wavelet Convolution (WTConv) layers with op
   - **Triton**: Pure Triton implementation for portability and high performance without CUDA dependencies. Supports fp32, fp16, and bf16.
 - **Seamless Integration**: Matches the API of the original `WTConv2d` for easy integration into existing models.
 
-
 ## Performance
 
 Speedup compared to the original WTConv implementation (Kernel Size: 5, FP32):
 
-| Platform | Hardware | Speedup |
-|----------|----------|---------|
-| **CUDA**  | RTX A6000 | ~2.9x |
-| **Triton** | RTX A6000 | ~3.0x |
-| **Metal** | Apple M3 | ~2.3x |
+| Platform   | Hardware  | Speedup |
+| ---------- | --------- | ------- |
+| **CUDA**   | RTX A6000 | ~2.9x   |
+| **Triton** | RTX A6000 | ~3.0x   |
+| **Metal**  | Apple M3  | ~2.3x   |
 
 ## Installation
 
 Ensure you have the necessary dependencies installed:
+
 - PyTorch
 - Triton (for the Triton backend)
 
@@ -49,7 +49,7 @@ from fast_wtconv.wtconv import WTConv2d
 layer = WTConv2d(64, 64, kernel_size=5, wt_levels=2)
 
 # Move to device (CUDA or MPS)
-device = 'cuda' if torch.cuda.is_available() else 'mps'
+device = "cuda" if torch.cuda.is_available() else "mps"
 layer = layer.to(device)
 
 # Forward pass
