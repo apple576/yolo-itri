@@ -24,19 +24,29 @@ def create_2d_wavelet_filter(wave, in_size, out_size, type=torch.float):
     w = pywt.Wavelet(wave)
     dec_hi = torch.tensor(w.dec_hi[::-1], dtype=type)
     dec_lo = torch.tensor(w.dec_lo[::-1], dtype=type)
-    dec_filters = torch.stack([dec_lo.unsqueeze(0) * dec_lo.unsqueeze(1),
-                               dec_lo.unsqueeze(0) * dec_hi.unsqueeze(1),
-                               dec_hi.unsqueeze(0) * dec_lo.unsqueeze(1),
-                               dec_hi.unsqueeze(0) * dec_hi.unsqueeze(1)], dim=0)
+    dec_filters = torch.stack(
+        [
+            dec_lo.unsqueeze(0) * dec_lo.unsqueeze(1),
+            dec_lo.unsqueeze(0) * dec_hi.unsqueeze(1),
+            dec_hi.unsqueeze(0) * dec_lo.unsqueeze(1),
+            dec_hi.unsqueeze(0) * dec_hi.unsqueeze(1),
+        ],
+        dim=0,
+    )
 
     dec_filters = dec_filters[:, None].repeat(in_size, 1, 1, 1)
 
     rec_hi = torch.tensor(w.rec_hi, dtype=type)
     rec_lo = torch.tensor(w.rec_lo, dtype=type)
-    rec_filters = torch.stack([rec_lo.unsqueeze(0) * rec_lo.unsqueeze(1),
-                               rec_lo.unsqueeze(0) * rec_hi.unsqueeze(1),
-                               rec_hi.unsqueeze(0) * rec_lo.unsqueeze(1),
-                               rec_hi.unsqueeze(0) * rec_hi.unsqueeze(1)], dim=0)
+    rec_filters = torch.stack(
+        [
+            rec_lo.unsqueeze(0) * rec_lo.unsqueeze(1),
+            rec_lo.unsqueeze(0) * rec_hi.unsqueeze(1),
+            rec_hi.unsqueeze(0) * rec_lo.unsqueeze(1),
+            rec_hi.unsqueeze(0) * rec_hi.unsqueeze(1),
+        ],
+        dim=0,
+    )
 
     rec_filters = rec_filters[:, None].repeat(out_size, 1, 1, 1)
 
@@ -45,7 +55,7 @@ def create_2d_wavelet_filter(wave, in_size, out_size, type=torch.float):
 
 def wavelet_1d_transform(x, filters):
     b, c, l = x.shape
-    pad = (filters.shape[2] // 2 - 1)
+    pad = filters.shape[2] // 2 - 1
     x = F.conv1d(x, filters, stride=2, groups=c, padding=pad)
     x = x.reshape(b, c, 2, l // 2)
     return x
@@ -53,7 +63,7 @@ def wavelet_1d_transform(x, filters):
 
 def inverse_1d_wavelet_transform(x, filters):
     b, c, _, l_half = x.shape
-    pad = (filters.shape[2] // 2 - 1)
+    pad = filters.shape[2] // 2 - 1
     x = x.reshape(b, c * 2, l_half)
     x = F.conv_transpose1d(x, filters, stride=2, groups=c, padding=pad)
     return x
