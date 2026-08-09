@@ -40,10 +40,12 @@ conda env create -f environment.yaml
 
 
 # ============ 參數設定區 ============
+```python
 IMG_FOLDER = r'C:\Users\user\Downloads\dataset\val\images'      # 你的圖片資料夾路徑
 LABEL_FOLDER = r'C:\Users\user\Downloads\dataset\val\labels'    # 你的 GT 標註資料夾路徑
 MODEL_WEIGHTS = r'C:\Users\user\Desktop\yolo-main\runs\detect\yolov11s_wtconv3\weights\best.pt' # 模型權重路徑
 OUTPUT_FOLDER = r'C:\Users\user\Desktop\results_WTConv_conf0001'   # 想要儲存結果的資料夾名稱
+```
 # ================================
 📌 參數詳細說明：
 
