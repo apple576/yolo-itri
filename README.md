@@ -53,7 +53,7 @@ OUTPUT_FOLDER = r'C:\Users\user\Desktop\results_WTConv_conf0001'   # 想要儲�
 
 `LABEL_FOLDER`：放置對應 Ground Truth 標註檔（.txt）的資料夾路徑。
 
-`MODEL_WEIGHTS`：訓練好的 .pt 模型權重路徑（預設放在專案內 runs/detect/yolov11s_wtconv3/weights/best.pt）。
+`MODEL_WEIGHTS`：訓練好的 .pt 模型權重路徑（預設放在專案內 `runs/detect/yolov11s_wtconv3/weights/best.pt`）。
 
 `OUTPUT_FOLDER`：執行完成後預計儲存結果圖表與數據的輸出資料夾名稱。
 
