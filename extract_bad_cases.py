@@ -1,29 +1,29 @@
-import os
 import shutil
 from pathlib import Path
-import torch
+
 from ultralytics import YOLO
 
 # =====================================================================
 # ⚙️ 1. 設定區塊 (請根據你的路徑進行修改)
 # =====================================================================
 MODEL_PATH = r"C:\Users\user\Desktop\yolo-main\runs\detect\yolov11s_wtconv3\weights\best.pt"  # 你的模型權重路徑
-VAL_IMAGES_DIR = r"C:\Users\user\Downloads\dataset\val\images"             # 驗證集圖片資料夾
-VAL_LABELS_DIR = r"C:\Users\user\Downloads\dataset\val\labels"             # 驗證集標籤資料夾 (.txt)
-OUTPUT_DIR = r"bad_cases"                            # 輸出 Bad Cases 的總資料夾
+VAL_IMAGES_DIR = r"C:\Users\user\Downloads\dataset\val\images"  # 驗證集圖片資料夾
+VAL_LABELS_DIR = r"C:\Users\user\Downloads\dataset\val\labels"  # 驗證集標籤資料夾 (.txt)
+OUTPUT_DIR = r"bad_cases"  # 輸出 Bad Cases 的總資料夾
 
 # 你指定的 6 個目標類別 ID (過濾條件)
 TARGET_CLASSES = {7, 8, 10, 11, 12, 13}
 
 # 設定檢測門檻
-IOU_THRESHOLD = 0.50   # IoU 判定標準 (50%)
+IOU_THRESHOLD = 0.50  # IoU 判定標準 (50%)
 CONF_THRESHOLD = 0.25  # 模型預測的信心度門檻
+
 
 # =====================================================================
 # 📐 2. IoU 計算工具函式
 # =====================================================================
 def compute_iou(box1, box2):
-    """計算兩組 Bounding Box [x1, y1, x2, y2] 的 IoU"""
+    """計算兩組 Bounding Box [x1, y1, x2, y2] 的 IoU."""
     x1 = max(box1[0], box2[0])
     y1 = max(box1[1], box2[1])
     x2 = min(box1[2], box2[2])
@@ -36,14 +36,16 @@ def compute_iou(box1, box2):
     union = box1_area + box2_area - intersection
     return intersection / union if union > 0 else 0.0
 
+
 def xywh2xyxy(box, img_w, img_h):
-    """將 YOLO 的歸一化 [xc, yc, w, h] 轉為絕對座標 [x1, y1, x2, y2]"""
+    """將 YOLO 的歸一化 [xc, yc, w, h] 轉為絕對座標 [x1, y1, x2, y2]."""
     xc, yc, w, h = box
     x1 = (xc - w / 2) * img_w
     y1 = (yc - h / 2) * img_h
     x2 = (xc + w / 2) * img_w
     y2 = (yc + h / 2) * img_h
     return [x1, y1, x2, y2]
+
 
 # =====================================================================
 # 🚀 3. 主流程邏輯
@@ -58,8 +60,7 @@ def main():
     print(f"🚀 正在載入模型: {MODEL_PATH}")
     model = YOLO(MODEL_PATH)
 
-    image_paths = list(Path(VAL_IMAGES_DIR).glob("*.[jJ][pP][gG]")) + \
-                  list(Path(VAL_IMAGES_DIR).glob("*.[pP][nN][gG]"))
+    image_paths = list(Path(VAL_IMAGES_DIR).glob("*.[jJ][pP][gG]")) + list(Path(VAL_IMAGES_DIR).glob("*.[pP][nN][gG]"))
 
     fp_count = 0
     fn_count = 0
@@ -68,11 +69,11 @@ def main():
 
     for img_path in image_paths:
         label_path = Path(VAL_LABELS_DIR) / f"{img_path.stem}.txt"
-        
+
         # 1. 讀取 Ground Truth (GT)
         gt_boxes = []
         if label_path.exists():
-            with open(label_path, "r") as f:
+            with open(label_path) as f:
                 for line in f:
                     parts = line.strip().split()
                     if parts:
@@ -81,7 +82,7 @@ def main():
                         gt_boxes.append({"cls": cls_id, "bbox_raw": bbox})
 
         # 2. 執行模型預測
-        results = model.predict(source=str(img_path), conf=CONF_THRESHOLD, iou=0.45 ,verbose=False)[0]
+        results = model.predict(source=str(img_path), conf=CONF_THRESHOLD, iou=0.45, verbose=False)[0]
         img_h, img_w = results.orig_shape
 
         # 轉化 GT 絕對座標
@@ -143,6 +144,7 @@ def main():
     print(f"🙈 漏檢案例 (False Negatives) 複製數量: {fn_count} 張")
     print(f"📁 圖片已分別存入: {OUTPUT_DIR}/")
     print("==================================================")
+
 
 if __name__ == "__main__":
     main()
