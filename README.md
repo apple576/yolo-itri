@@ -49,13 +49,13 @@ OUTPUT_FOLDER = r'C:\Users\user\Desktop\results_WTConv_conf0001'   # 想要儲�
 # ================================
 📌 參數詳細說明：
 
-IMG_FOLDER：放置待測圖片（例如驗證集 images）的絕對或相對路徑。
+`IMG_FOLDER`：放置待測圖片（例如驗證集 images）的絕對或相對路徑。
 
-LABEL_FOLDER：放置對應 Ground Truth 標註檔（.txt）的資料夾路徑。
+`LABEL_FOLDER`：放置對應 Ground Truth 標註檔（.txt）的資料夾路徑。
 
-MODEL_WEIGHTS：訓練好的 .pt 模型權重路徑（預設放在專案內 runs/detect/yolov11s_wtconv3/weights/best.pt）。
+`MODEL_WEIGHTS`：訓練好的 .pt 模型權重路徑（預設放在專案內 runs/detect/yolov11s_wtconv3/weights/best.pt）。
 
-OUTPUT_FOLDER：執行完成後預計儲存結果圖表與數據的輸出資料夾名稱。
+`OUTPUT_FOLDER`：執行完成後預計儲存結果圖表與數據的輸出資料夾名稱。
 
 5. **修改推論參數**：
 * 找到 `process_folders` 函式內的模型推論程式碼：
