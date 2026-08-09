@@ -36,6 +36,5 @@ for stage_id in range(4):
             else:
                 print(sp_key[4])
 
-new_ckpt = {f"backbone.{k}": new_ckpt[k] for k in new_ckpt.keys()}
+new_ckpt = {f"backbone.{k}": new_ckpt[k] for k in new_ckpt}
 torch.save(new_ckpt, "model_tiny_mmseg.pth")
-
