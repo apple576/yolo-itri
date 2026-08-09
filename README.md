@@ -58,7 +58,7 @@ OUTPUT_FOLDER = r'C:\Users\user\Desktop\results_WTConv_conf0001'   # 想要儲�
 `OUTPUT_FOLDER`：執行完成後預計儲存結果圖表與數據的輸出資料夾名稱。
 
 5. **修改推論參數**：
-* 找到 `process_folders` 函式內的模型推論程式碼：
+* 在同一份 `predict.py` 找到 `process_folders` 函式內的模型推論程式碼：
 ```python
 results = model(img, conf=0.001, iou=0.45, verbose=False)
 
@@ -70,14 +70,8 @@ results = model(img, conf=0.001, iou=0.45, verbose=False)
 
 6. **切換 Python 執行環境**：
 * 點擊 VS Code 右下角的 Python 環境選擇器（或按 `Ctrl + Shift + P` 輸入 `Python: Select Interpreter`）。
-* 切換環境為剛才 2-2 建立的 **`yolov11_test`**。
+* 切換環境為剛才 2-3 建立的 **`yolov11_test`**。
 
 
 7. **執行程式**：
 * 按下右上角的 Play 按鈕（或在 Terminal 中執行 `python predict.py`）開始跑推論。
-
-
-
-```
-
-```
