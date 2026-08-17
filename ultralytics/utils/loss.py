@@ -15,7 +15,7 @@ from ultralytics.utils.torch_utils import autocast
 
 from .metrics import bbox_iou, probiou
 from .tal import bbox2dist
-
+from ultralytics.utils.metrics import WIoU_Loss, bbox_iou
 
 class VarifocalLoss(nn.Module):
     """Varifocal loss by Zhang et al.
@@ -109,9 +109,11 @@ class BboxLoss(nn.Module):
     """Criterion class for computing training losses for bounding boxes."""
 
     def __init__(self, reg_max: int = 16):
-        """Initialize the BboxLoss module with regularization maximum and DFL settings."""
+        """Initialize the BboxLoss module with regularization maximum, DFL, and WIoUv3 settings."""
         super().__init__()
         self.dfl_loss = DFLoss(reg_max) if reg_max > 1 else None
+        # 1. 初始化 WIoUv3 模組
+        self.wiou = WIoU_Loss(alpha=1.9, delta=3.0, momentum=0.99)
 
     def forward(
         self,
@@ -123,12 +125,14 @@ class BboxLoss(nn.Module):
         target_scores_sum: torch.Tensor,
         fg_mask: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor]:
-        """Compute IoU and DFL losses for bounding boxes."""
+        """Compute IoU (WIoUv3) and DFL losses for bounding boxes."""
         weight = target_scores.sum(-1)[fg_mask].unsqueeze(-1)
-        iou = bbox_iou(pred_bboxes[fg_mask], target_bboxes[fg_mask], xywh=False, CIoU=True)
-        loss_iou = ((1.0 - iou) * weight).sum() / target_scores_sum
 
-        # DFL loss
+        # 2. 替換原有的 CIoU 計算為 WIoUv3
+        loss_wiou, iou = self.wiou(pred_bboxes[fg_mask], target_bboxes[fg_mask])
+        loss_iou = (loss_wiou * weight).sum() / target_scores_sum
+
+        # DFL loss (維持原樣)
         if self.dfl_loss:
             target_ltrb = bbox2dist(anchor_points, target_bboxes, self.dfl_loss.reg_max - 1)
             loss_dfl = self.dfl_loss(pred_dist[fg_mask].view(-1, self.dfl_loss.reg_max), target_ltrb[fg_mask]) * weight

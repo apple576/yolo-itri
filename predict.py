@@ -58,7 +58,7 @@ def process_folders(img_dir, gt_dir, model_path, output_dir):
         # ==========================================
         # 先用「乾淨的原始圖片」進行模型推論
         # ==========================================
-        results = model(img, conf=0.001, iou=0.45, verbose=False) 
+        results = model(img, conf=0.01, iou=0.45, verbose=False) 
 
         # ==========================================
         # 開始在圖片上作畫 (此時 img 已經不需要再丟給模型了)
@@ -188,8 +188,8 @@ if __name__ == '__main__':
     # ================= 參數設定區 =================
     IMG_FOLDER = r'C:\Users\user\Downloads\dataset\val\images'      # 你的圖片資料夾路徑
     LABEL_FOLDER = r'C:\Users\user\Downloads\dataset\val\labels'    # 你的 GT 標註資料夾路徑
-    MODEL_WEIGHTS = r'C:\Users\user\Desktop\yolo-main\runs\detect\yolov11s_wtconv3\weights\best.pt' # 模型權重路徑
-    OUTPUT_FOLDER = r'C:\Users\user\Desktop\results_WTConv_conf0001'   # 想要儲存結果的資料夾名稱
+    MODEL_WEIGHTS = r'C:\Users\user\Desktop\best(3).pt' # 模型權重路徑
+    OUTPUT_FOLDER = r'C:\Users\user\Desktop\results_WTConv_conf001_thead'   # 想要儲存結果的資料夾名稱
     # ==============================================
 
     process_folders(IMG_FOLDER, LABEL_FOLDER, MODEL_WEIGHTS, OUTPUT_FOLDER)

@@ -11,6 +11,7 @@ from typing import Any
 
 import numpy as np
 import torch
+import torch.nn as nn
 
 from ultralytics.utils import LOGGER, DataExportMixin, SimpleClass, TryExcept, checks, plt_settings
 
@@ -1554,3 +1555,62 @@ class OBBMetrics(DetMetrics):
         DetMetrics.__init__(self, names)
         # TODO: probably remove task as well
         self.task = "obb"
+
+class WIoU_Loss(nn.Module):
+    """
+    Wise-IoU v3 Loss Function
+    Paper: Wise-IoU: Bounding Box Regression Loss with Dynamic Focusing Mechanism
+    """
+    def __init__(self, alpha=1.9, delta=3.0, momentum=0.99):
+        super().__init__()
+        self.alpha = alpha
+        self.delta = delta
+        self.momentum = momentum
+        self.register_buffer("running_mean", torch.tensor(1.0))
+        self.eps = 1e-7
+
+    def forward(self, pred, target, eps=1e-7):
+        """
+        Args:
+            pred: (N, 4) in [x1, y1, x2, y2]
+            target: (N, 4) in [x1, y1, x2, y2]
+        """
+        # 1. 計算交集 (Intersection)
+        b1_x1, b1_y1, b1_x2, b1_y2 = pred.chunk(4, -1)
+        b2_x1, b2_y1, b2_x2, b2_y2 = target.chunk(4, -1)
+
+        inter = (torch.min(b1_x2, b2_x2) - torch.max(b1_x1, b2_x1)).clamp(0) * \
+                (torch.min(b1_y2, b2_y2) - torch.max(b1_y1, b2_y1)).clamp(0)
+
+        # 2. 計算聯集 (Union) 與 IoU
+        w1, h1 = b1_x2 - b1_x1, b1_y2 - b1_y1
+        w2, h2 = b2_x2 - b2_x1, b2_y2 - b2_y1
+        union = w1 * h1 + w2 * h2 - inter + eps
+        iou = inter / union
+
+        # 3. 計算最小外接矩形 Wg, Hg (脫離計算圖)
+        cw = torch.max(b1_x2, b2_x2) - torch.min(b1_x1, b2_x1)
+        ch = torch.max(b1_y2, b2_y2) - torch.min(b1_y1, b2_y1)
+        c2 = (cw ** 2 + ch ** 2).detach() + eps  # (Wg^2 + Hg^2)* 脫離計算圖
+
+        # 4. 計算中心點距離
+        b1_cx, b1_cy = (b1_x1 + b1_x2) / 2, (b1_y1 + b1_y2) / 2
+        b2_cx, b2_cy = (b2_x1 + b2_x2) / 2, (b2_y1 + b2_y2) / 2
+        rho2 = (b1_cx - b2_cx) ** 2 + (b1_cy - b2_cy) ** 2
+
+        # 5. 計算 WIoUv1
+        dist_penalty = torch.exp(rho2 / c2)
+        iou_loss = 1.0 - iou
+        loss_wiou_v1 = dist_penalty * iou_loss
+
+        # 6. 計算 WIoUv3 動態非單調聚焦權重 r
+        if self.training:
+            current_mean = iou_loss.detach().mean()
+            self.running_mean = self.momentum * self.running_mean + (1.0 - self.momentum) * current_mean
+
+        beta = (iou_loss.detach() / (self.running_mean + eps)).clamp(0, 10.0)
+        # r = beta / (delta * alpha^(beta - delta))
+        r = beta / (self.delta * (self.alpha ** (beta - self.delta)) + eps)
+
+        loss_wiou_v3 = r * loss_wiou_v1
+        return loss_wiou_v3, iou

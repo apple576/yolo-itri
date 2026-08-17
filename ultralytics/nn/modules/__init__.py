@@ -17,6 +17,7 @@ Examples:
     >>> subprocess.run(f"onnxslim {f} {f} && open {f}", shell=True, check=True)  # pip install onnxslim
 """
 
+from .tood_head import TOODHeadYOLO11
 from .block import (
     C1,
     C2,
@@ -181,4 +182,5 @@ __all__ = (
     "YOLOEDetect",
     "YOLOESegment",
     "v10Detect",
+    "TOODHeadYOLO11",
 )
